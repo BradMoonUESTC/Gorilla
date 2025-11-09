@@ -4,7 +4,7 @@ import re
 import numpy as np
 import requests
 
-# 全局模型配置缓存
+# Global model configuration cache
 _model_config = None
 
 def get_model(model_key: str) -> str:
@@ -35,7 +35,7 @@ def ask_openai_common(prompt):
             "Authorization": f"Bearer {api_key}"
         }
         data = {
-            "model": get_model('openai_general'),  # 使用模型管理器获取OpenAI模型
+            "model": get_model('openai_general'),  # Obtain OpenAI model via the model manager
             "messages": [
                 {
                     "role": "user",
@@ -172,7 +172,7 @@ def detect_vulnerabilities(prompt):
         else:
             return ""
     except requests.exceptions.RequestException as e:
-        print(f"vul API调用失败。错误: {str(e)}")
+        print(f"Vulnerability API call failed. Error: {str(e)}")
         return ""
 def analyze_code_assumptions(prompt):
     model = get_model('code_assumptions_analysis')
@@ -205,7 +205,7 @@ def analyze_code_assumptions(prompt):
         else:
             return ""
     except requests.exceptions.RequestException as e:
-        print(f"Claude API调用失败。错误: {str(e)}")
+        print(f"Claude API call failed. Error: {str(e)}")
         return ""
 
 def ask_deepseek(prompt):
@@ -241,7 +241,7 @@ def ask_deepseek(prompt):
         else:
             return ""
     except requests.exceptions.RequestException as e:
-        print(f"wokaai deepseek API调用失败。错误: {str(e)}")
+        print(f"wokaai deepseek API call failed. Error: {str(e)}")
         return ""
 
 
@@ -282,15 +282,15 @@ def common_get_embedding(text: str):
         return embedding_data['data'][0]['embedding']
     except requests.exceptions.RequestException as e:
         print(f"Error: {e}")
-        return list(np.zeros(3072))  # 返回长度为3072的全0数组
+        return list(np.zeros(3072))  # Return an all-zero array of length 3072
 
 
-# ========== 漏洞检测多轮分析专用函数 ==========
+# ========== Multi-round vulnerability analysis specialized functions ==========
 
 def perform_initial_vulnerability_validation(prompt):
     """
-    代理初始分析 - 执行初步漏洞检测分析
-    环境变量: AGENT_INITIAL_MODEL (默认: claude-3-haiku-20240307)
+    Agent initial analysis - perform preliminary vulnerability detection analysis
+    Env vars: AGENT_INITIAL_MODEL (default: claude-3-haiku-20240307)
     """
     model = get_model('initial_vulnerability_validation')
     api_key = os.environ.get('OPENAI_API_KEY')
@@ -322,14 +322,14 @@ def perform_initial_vulnerability_validation(prompt):
         else:
             return ""
     except requests.exceptions.RequestException as e:
-        print(f"代理初始分析API调用失败。错误: {str(e)}")
+        print(f"Agent initial analysis API call failed. Error: {str(e)}")
         return ""
 
 
 def extract_vulnerability_findings_json(prompt):
     """
-    代理JSON提取 - 从自然语言中提取结构化JSON
-    环境变量: AGENT_JSON_MODEL (默认: gpt-4o-mini)
+    Agent JSON extraction - extract structured JSON from natural language
+    Env vars: AGENT_JSON_MODEL (default: gpt-4o-mini)
     """
     model = get_model('vulnerability_findings_json_extraction')
     api_key = os.environ.get('OPENAI_API_KEY')
@@ -361,14 +361,14 @@ def extract_vulnerability_findings_json(prompt):
         else:
             return ""
     except requests.exceptions.RequestException as e:
-        print(f"代理JSON提取API调用失败。错误: {str(e)}")
+        print(f"Agent JSON extraction API call failed. Error: {str(e)}")
         return ""
 
 
 def determine_additional_context_needed(prompt):
     """
-    代理信息查询 - 确定需要什么类型的额外信息
-    环境变量: AGENT_INFO_QUERY_MODEL (默认: claude-3-sonnet-20240229)
+    Agent info query - determine what additional information is needed
+    Env vars: AGENT_INFO_QUERY_MODEL (default: claude-3-sonnet-20240229)
     """
     model = get_model('additional_context_determination')
     api_key = os.environ.get('OPENAI_API_KEY')
@@ -400,7 +400,7 @@ def determine_additional_context_needed(prompt):
         else:
             return ""
     except requests.exceptions.RequestException as e:
-        print(f"代理信息查询API调用失败。错误: {str(e)}")
+        print(f"Agent info query API call failed. Error: {str(e)}")
         return ""
 
 
@@ -408,8 +408,8 @@ def determine_additional_context_needed(prompt):
 
 def perform_comprehensive_vulnerability_analysis(prompt):
     """
-    代理最终分析 - 基于所有收集的信息做最终判断
-    环境变量: AGENT_FINAL_MODEL (默认: claude-opus-4-20250514)
+    Agent final analysis - make the final judgment based on all collected information
+    Env vars: AGENT_FINAL_MODEL (default: claude-opus-4-20250514)
     """
     model = get_model('comprehensive_vulnerability_analysis')
     api_key = os.environ.get('OPENAI_API_KEY')
@@ -441,18 +441,18 @@ def perform_comprehensive_vulnerability_analysis(prompt):
         else:
             return ""
     except requests.exceptions.RequestException as e:
-        print(f"代理最终分析API调用失败。错误: {str(e)}")
+        print(f"Agent final analysis API call failed. Error: {str(e)}")
         return ""
 
 
 def summarize_group_vulnerability_results(group_results_prompt: str) -> str:
-    """使用LLM总结同组任务的漏洞结果
+    """Summarize vulnerability results of a group of tasks using an LLM
     
     Args:
-        group_results_prompt: 包含同组结果的完整提示词
+        group_results_prompt: Full prompt containing the grouped results
         
     Returns:
-        str: LLM生成的漏洞总结
+        str: LLM-generated vulnerability summary
     """
     try:
         # 从model_config.json获取用于总结的模型配置
@@ -468,11 +468,11 @@ def summarize_group_vulnerability_results(group_results_prompt: str) -> str:
                     "content": group_results_prompt
                 }
             ],
-            "temperature": 0.3,  # 较低的温度确保总结的一致性
-            "max_tokens": 1000   # 限制总结长度
+            "temperature": 0.3,  # Lower temperature ensures consistency in summarization
+            "max_tokens": 1000   # Limit summary length
         }
         
-        print(f"🤖 使用模型 {get_model_by_key(model_key)} 总结同组漏洞结果...")
+        print(f"🤖 Using model {get_model_by_key(model_key)} to summarize grouped vulnerability results...")
         
         response = requests.post(
             get_api_url(),
@@ -485,17 +485,17 @@ def summarize_group_vulnerability_results(group_results_prompt: str) -> str:
         
         if 'choices' in response_data and len(response_data['choices']) > 0:
             summary = response_data['choices'][0]['message']['content']
-            print(f"✅ 同组结果总结完成，长度: {len(summary)} 字符")
+            print(f"✅ Group results summary completed, length: {len(summary)} chars")
             return summary
         else:
-            print("⚠️ 同组结果总结API响应格式异常")
+            print("⚠️ Group results summary API response format unexpected")
             return ""
             
     except requests.exceptions.RequestException as e:
-        print(f"❌ 同组结果总结API调用失败: {str(e)}")
+        print(f"❌ Group results summary API call failed: {str(e)}")
         return ""
     except Exception as e:
-        print(f"❌ 同组结果总结处理失败: {str(e)}")
+        print(f"❌ Group results summary processing failed: {str(e)}")
         return ""
 
 

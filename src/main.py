@@ -1,5 +1,5 @@
 """
-主程序 - Gorilla测试生成和执行系统
+Main program - Gorilla test generation and execution system
 """
 
 import os
@@ -13,7 +13,7 @@ from auto_fixer import AutoFixer
 
 
 class GorillaTestSystem:
-    """Gorilla测试系统主类"""
+    """Main class for the Gorilla testing system"""
     
     def __init__(self, project_path: str):
         self.project_path = project_path
@@ -22,114 +22,114 @@ class GorillaTestSystem:
         self.auto_fixer = AutoFixer(project_path=project_path)
         
     def generate_and_run_test(self, description: str) -> bool:
-        """生成并运行测试的完整流程"""
+        """Full flow to generate and run a test"""
         
-        print(f"🚀 开始处理测试需求: {description}")
+        print(f"🚀 Starting to process test requirement: {description}")
         
-        # 1. 检查环境
+        # 1. Check environment
         if not self._check_environment():
             return False
             
-        # 2. 生成初始测试代码
-        print("📝 生成测试代码...")
+        # 2. Generate initial test code
+        print("📝 Generating test code...")
         test_code = self.test_generator.generate_test_from_description(description)
         if not test_code:
-            print("❌ 测试代码生成失败")
+            print("❌ Test code generation failed")
             return False
         
-        # 3. 执行测试并自动修复
+        # 3. Execute tests and auto-fix
         max_fix_attempts = 3
         for attempt in range(max_fix_attempts + 1):
             
             if attempt == 0:
-                print("🧪 执行初始测试...")
+                print("🧪 Running initial test...")
             else:
-                print(f"🔧 执行修复后的测试 (第{attempt}次修复)")
+                print(f"🔧 Running fixed test (attempt {attempt})")
                 
             # 执行测试
             success, output = self.forge_executor.write_and_run_test(test_code)
             
             if success:
-                print("🎉 测试执行成功!")
-                print("测试输出:")
+                print("🎉 Test executed successfully!")
+                print("Test output:")
                 print(output)
                 return True
             else:
-                print(f"❌ 测试失败 (尝试 {attempt + 1}/{max_fix_attempts + 1})")
-                print("错误输出:")
+                print(f"❌ Test failed (attempt {attempt + 1}/{max_fix_attempts + 1})")
+                print("Error output:")
                 print(output)
                 
-                # 如果不是最后一次尝试，进行自动修复
+                # If not the last attempt, try to automatically fix
                 if attempt < max_fix_attempts:
-                    print("🔧 开始自动修复...")
+                    print("🔧 Starting auto-fix...")
                     fixed_code, fix_success = self.auto_fixer.fix_test_code(
                         test_code, output, description
                     )
                     
                     if fix_success:
                         test_code = fixed_code
-                        print("✅ 代码修复完成，重新测试...")
+                        print("✅ Code fixed, re-running tests...")
                     else:
-                        print("❌ 自动修复失败")
+                        print("❌ Auto-fix failed")
                         break
         
-        print("❌ 测试最终失败，已达到最大重试次数")
+        print("❌ Final test failed; maximum retries reached")
         return False
     
     def _check_environment(self) -> bool:
-        """检查运行环境"""
+        """Check the runtime environment"""
         
-        # 检查项目路径
+        # Check project path
         if not Path(self.project_path).exists():
-            print(f"❌ 项目路径不存在: {self.project_path}")
+            print(f"❌ Project path does not exist: {self.project_path}")
             return False
             
-        # 检查Foundry安装
+        # Check Foundry installation
         if not self.forge_executor.check_foundry_installation():
-            print("❌ Foundry未安装，请先安装Foundry")
-            print("安装命令: curl -L https://foundry.paradigm.xyz | bash")
+            print("❌ Foundry is not installed. Please install Foundry first.")
+            print("Install command: curl -L https://foundry.paradigm.xyz | bash")
             return False
             
-        # 检查或初始化Foundry项目
+        # Check or initialize Foundry project
         if not self.forge_executor.initialize_foundry_project():
-            print("❌ Foundry项目初始化失败")
+            print("❌ Foundry project initialization failed")
             return False
             
-        # 检查基础模板
+        # Check base template
         template_path = Path(self.project_path) / "test" / "GorillaBase.t.sol"
         if not template_path.exists():
-            print(f"❌ 基础模板文件不存在: {template_path}")
-            print("请创建基础模板文件")
+            print(f"❌ Base template file does not exist: {template_path}")
+            print("Please create the base template file")
             return False
             
         return True
 
 
 def main():
-    """主函数"""
+    """Main function"""
     
-    # 加载环境变量
+    # Load environment variables
     load_dotenv()
     
     if len(sys.argv) < 3:
-        print("用法: python main.py <项目路径> <测试描述>")
-        print("示例: python main.py ./test-project '测试ERC20代币的转账功能'")
+        print("Usage: python main.py <project_path> <test_description>")
+        print("Example: python main.py ./test-project 'Test ERC20 token transfer function'")
         return
     
     project_path = sys.argv[1]
     description = sys.argv[2]
     
-    # 创建测试系统
+    # Create testing system
     system = GorillaTestSystem(project_path)
     
-    # 执行测试
+    # Run test
     success = system.generate_and_run_test(description)
     
     if success:
-        print("🎉 测试流程完成!")
+        print("🎉 Test flow completed!")
         sys.exit(0)
     else:
-        print("❌ 测试流程失败")
+        print("❌ Test flow failed")
         sys.exit(1)
 
 

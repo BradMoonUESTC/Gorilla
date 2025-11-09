@@ -1,5 +1,5 @@
 """
-动态规范生成器 - 使用LLM动态生成形式化规范和不变量
+Dynamic Specification Generator - Use an LLM to dynamically generate formal specifications and invariants
 """
 
 import os
@@ -13,74 +13,74 @@ from openai_api.openai import ask_openai_common
 
 
 class DynamicSpecGenerator:
-    """动态规范生成器"""
+    """Dynamic specification generator"""
     
     def __init__(self, project_path: str):
         self.project_path = project_path
     
     def generate_formal_specs(self, contract_code: str, vulnerability_focus: str = None) -> Dict[str, Any]:
-        """为给定合约动态生成形式化规范"""
+        """Dynamically generate formal specifications for a given contract"""
         
         prompt = f"""
-你是一个形式化验证专家。请为以下智能合约生成完整的形式化规范。
+You are a formal verification expert. Please generate a complete set of formal specifications for the following smart contract.
 
-=== 合约代码 ===
+=== Contract Code ===
 {contract_code}
 
-=== 任务要求 ===
-请生成以下类型的形式化规范：
+=== Task Requirements ===
+Generate the following types of formal specifications:
 
-1. **不变量 (Invariants)** - 合约在任何时候都应该满足的条件
-2. **前置条件 (Pre-conditions)** - 函数执行前必须满足的条件  
-3. **后置条件 (Post-conditions)** - 函数执行后应该满足的条件
-4. **安全属性 (Safety Properties)** - 合约不应该违反的安全规则
+1. Invariants - Conditions that must always hold for the contract
+2. Pre-conditions - Conditions that must hold before a function executes
+3. Post-conditions - Conditions that should hold after a function executes
+4. Safety Properties - Security rules the contract must not violate
 
-{f"特别关注: {vulnerability_focus}" if vulnerability_focus else ""}
+{f"Special focus: {vulnerability_focus}" if vulnerability_focus else ""}
 
-请按以下JSON格式返回（只返回JSON，不要其他内容）：
+Return strictly in the following JSON format (return JSON only, nothing else):
 {{
     "invariants": [
         {{
-            "name": "不变量名称",
-            "description": "不变量描述",
-            "condition": "Solidity条件表达式",
-            "check_code": "验证代码"
+            "name": "Invariant name",
+            "description": "Invariant description",
+            "condition": "Solidity condition expression",
+            "check_code": "Verification code"
         }}
     ],
     "pre_conditions": [
         {{
-            "function": "函数名",
-            "condition": "前置条件",
-            "description": "描述"
+            "function": "Function name",
+            "condition": "Pre-condition",
+            "description": "Description"
         }}
     ],
     "post_conditions": [
         {{
-            "function": "函数名", 
-            "condition": "后置条件",
-            "description": "描述"
+            "function": "Function name", 
+            "condition": "Post-condition",
+            "description": "Description"
         }}
     ],
     "safety_properties": [
         {{
-            "name": "安全属性名",
-            "description": "安全属性描述",
-            "violation_condition": "什么情况下违反",
-            "check_code": "检测代码"
+            "name": "Safety property name",
+            "description": "Safety property description",
+            "violation_condition": "Conditions under which it is violated",
+            "check_code": "Check code"
         }}
     ]
 }}
 """
         
         try:
-            print("🧠 LLM正在生成形式化规范...")
+            print("🧠 LLM is generating formal specifications...")
             print("-" * 50)
             print(prompt)
             print("-" * 50)
             
             response = ask_openai_common(prompt)
             
-            print("🧠 LLM生成的形式化规范:")
+            print("🧠 LLM-generated formal specifications:")
             print("-" * 50)
             print(response)
             print("-" * 50)
@@ -91,56 +91,56 @@ class DynamicSpecGenerator:
                 specs = json.loads(response)
                 return specs
             except json.JSONDecodeError:
-                print("⚠️ JSON解析失败，使用默认规范")
+                print("⚠️ JSON parsing failed, using default specifications")
                 return self._get_default_specs()
                 
         except Exception as e:
-            print(f"规范生成失败: {e}")
+            print(f"Specification generation failed: {e}")
             return self._get_default_specs()
     
     def generate_vulnerability_test_logic(self, contract_code: str, vulnerability_description: str, formal_specs: Dict[str, Any]) -> Dict[str, str]:
-        """基于形式化规范生成漏洞测试逻辑"""
+        """Generate vulnerability test logic based on formal specifications"""
         
         prompt = f"""
-你是一个智能合约安全专家。基于以下信息生成具体的漏洞测试逻辑。
+You are a smart contract security expert. Generate concrete vulnerability test logic based on the following information.
 
-=== 合约代码 ===
+=== Contract Code ===
 {contract_code}
 
-=== 漏洞描述 ===
+=== Vulnerability Description ===
 {vulnerability_description}
 
-=== 形式化规范 ===
+=== Formal Specifications ===
 {formal_specs}
 
-=== 任务要求 ===
-请生成具体的测试逻辑来检测这个漏洞，包括：
+=== Task Requirements ===
+Generate specific test logic to detect this vulnerability, including:
 
-1. **测试逻辑** - 具体的Solidity代码来触发/检测漏洞
-2. **规范违反检测** - 检查哪些不变量或安全属性被违反
-3. **攻击验证** - 验证攻击是否成功的断言
+1. Test Logic - Concrete Solidity code to trigger/detect the vulnerability
+2. Spec Violation Checks - Which invariants or safety properties are violated
+3. Attack Verification - Assertions that verify whether the attack succeeded
 
-请严格按照以下格式返回（只返回代码，不要解释）：
+Return strictly in the following format (code only, no explanations):
 
-testLogic: [具体的测试执行代码，可以是函数调用或直接的Solidity代码]
-specViolationChecks: [检查规范违反的代码，多个检查用分号分隔]
-attackVerification: [验证攻击成功的断言代码]
+testLogic: [Concrete test execution code, either function calls or inline Solidity]
+specViolationChecks: [Code to check spec violations, separated by semicolons]
+attackVerification: [Assertions verifying the attack success]
 
-示例：
+Example:
 testLogic: vm.prank(attacker); token.mint(attacker, 1000000 * 10**18);
 specViolationChecks: assertTrue(token.balanceOf(attacker) > 0, "Unauthorized mint detected"); assertFalse(_checkAuthorizationInvariant(), "Authorization invariant violated");
 attackVerification: assertTrue(token.balanceOf(attacker) > attackerBalanceBefore, "Attack should increase attacker balance");
 """
         
         try:
-            print("🧠 LLM正在生成测试逻辑...")
+            print("🧠 LLM is generating test logic...")
             print("-" * 50)
             print(prompt)
             print("-" * 50)
             
             response = ask_openai_common(prompt)
             
-            print("🧠 LLM生成的测试逻辑:")
+            print("🧠 LLM-generated test logic:")
             print("-" * 50)
             print(response)
             print("-" * 50)
@@ -148,19 +148,19 @@ attackVerification: assertTrue(token.balanceOf(attacker) > attackerBalanceBefore
             return self._parse_test_logic_response(response)
             
         except Exception as e:
-            print(f"测试逻辑生成失败: {e}")
+            print(f"Test logic generation failed: {e}")
             return {
-                'testLogic': '// 测试逻辑生成失败',
-                'specViolationChecks': '// 规范检查生成失败',
-                'attackVerification': '// 攻击验证生成失败'
+                'testLogic': '// Failed to generate test logic',
+                'specViolationChecks': '// Failed to generate spec checks',
+                'attackVerification': '// Failed to generate attack verification'
             }
     
     def _parse_test_logic_response(self, response: str) -> Dict[str, str]:
-        """解析测试逻辑响应"""
+        """Parse the test logic response"""
         result = {
-            'testLogic': '// 默认测试逻辑',
-            'specViolationChecks': '// 默认规范检查', 
-            'attackVerification': '// 默认攻击验证'
+            'testLogic': '// Default test logic',
+            'specViolationChecks': '// Default spec checks', 
+            'attackVerification': '// Default attack verification'
         }
         
         lines = response.split('\n')
@@ -176,12 +176,12 @@ attackVerification: assertTrue(token.balanceOf(attacker) > attackerBalanceBefore
         return result
     
     def _get_default_specs(self) -> Dict[str, Any]:
-        """获取默认规范（备用）"""
+        """Get default specifications (fallback)"""
         return {
             "invariants": [
                 {
                     "name": "balance_non_negative",
-                    "description": "所有余额必须非负",
+                    "description": "All balances must be non-negative",
                     "condition": "balanceOf(account) >= 0",
                     "check_code": "assertTrue(token.balanceOf(attacker) >= 0, 'Balance must be non-negative')"
                 }
@@ -191,9 +191,9 @@ attackVerification: assertTrue(token.balanceOf(attacker) > attackerBalanceBefore
             "safety_properties": [
                 {
                     "name": "unauthorized_operations",
-                    "description": "防止未授权操作",
-                    "violation_condition": "非授权用户执行特权操作",
-                    "check_code": "// 检查授权"
+                    "description": "Prevent unauthorized operations",
+                    "violation_condition": "Non-authorized user executes privileged operation",
+                    "check_code": "// Authorization check"
                 }
             ]
         }

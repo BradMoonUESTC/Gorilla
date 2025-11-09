@@ -1,5 +1,5 @@
 """
-动态测试生成器 - 完全基于LLM动态生成测试用例
+Dynamic Test Generator - Fully generate test cases with LLM dynamically
 """
 
 import os
@@ -21,51 +21,51 @@ from dynamic_spec_generator import DynamicSpecGenerator
 
 
 class DynamicTestGenerator:
-    """完全动态的测试生成器"""
+    """Fully dynamic test generator"""
     
     def __init__(self, project_path: str):
         self.project_path = project_path
         self.spec_generator = DynamicSpecGenerator(project_path)
     
     def generate_test_from_description(self, description: str) -> str:
-        """完全基于LLM动态生成测试代码"""
+        """Fully generate test code dynamically with LLM"""
         
-        # 1. 读取基础模板
+        # 1. Read base template
         try:
             template_code = read_base_template(self.project_path)
         except FileNotFoundError as e:
-            print(f"错误: {e}")
+            print(f"Error: {e}")
             return ""
         
-        # 2. 读取合约代码
+        # 2. Read contract code
         contract_code = self._read_contract_code()
         
-        # 3. 判断测试模式
+        # 3. Determine test mode
         test_mode = self._determine_test_mode(description)
-        print(f"🎯 测试模式: {test_mode}")
+        print(f"🎯 Test mode: {test_mode}")
         
         if test_mode == "spec_violation":
-            # 规范违反检测模式
+            # Specification violation detection mode
             variables = self._generate_dynamic_spec_test(description, contract_code)
         else:
-            # 直接漏洞利用模式
+            # Direct exploit testing mode
             variables = self._generate_dynamic_exploit_test(description, contract_code)
         
-        # 4. 生成测试代码
+        # 4. Generate test code
         test_code = generate_test_code(template_code, variables)
         
-        # 5. 替换类名
+        # 5. Replace class name
         test_code = test_code.replace("GorillaBaseTest", "GorillaTest")
         
         return test_code
     
     def _determine_test_mode(self, description: str) -> str:
-        """判断测试模式"""
+        """Determine test mode"""
         description_lower = description.lower()
         
         spec_keywords = [
-            "不变量", "invariant", "规范", "specification", "前置条件", "后置条件", 
-            "pre-condition", "post-condition", "违反", "violation", "形式化", "formal"
+            "invariant", "specification", "pre-condition", "post-condition",
+            "violation", "formal", "invariants", "specifications", "precondition", "postcondition"
         ]
         
         if any(keyword in description_lower for keyword in spec_keywords):
@@ -74,45 +74,45 @@ class DynamicTestGenerator:
             return "exploit"
     
     def _generate_dynamic_exploit_test(self, description: str, contract_code: str) -> Dict[str, str]:
-        """动态生成漏洞利用测试"""
+        """Dynamically generate exploit test"""
         
         prompt = f"""
-你是一个智能合约安全专家。请为以下测试需求生成具体的漏洞利用代码。
+You are a smart contract security expert. Please generate concrete exploit code for the following testing requirement.
 
-=== 合约代码 ===
+=== Contract Code ===
 {contract_code}
 
-=== 测试需求 ===
+=== Testing Requirement ===
 {description}
 
-=== 可用的测试环境 ===
-- token: SimpleERC20合约实例
-- attacker, victim, owner, user1, user2: 测试账户地址
-- 所有账户都有100 ETH和初始代币余额
-- vm.prank(), vm.deal(), vm.startPrank()等Foundry测试工具
+=== Available Test Environment ===
+- token: SimpleERC20 contract instance
+- attacker, victim, owner, user1, user2: test account addresses
+- All accounts have 100 ETH and initial token balances
+- Foundry helpers: vm.prank(), vm.deal(), vm.startPrank(), etc.
 
-=== 任务要求 ===
-请生成具体的Solidity代码来执行漏洞利用测试。不要调用预定义函数，而是直接编写漏洞利用逻辑。
+=== Task Requirements ===
+Generate concrete Solidity code to perform the exploit test. Do not call predefined helper functions; write the exploit logic directly.
 
-请严格按照以下格式返回（只返回代码，不要解释）：
+Return strictly in the following format (code only, no explanations):
 
-testLogic: [具体的漏洞利用代码，可以是多行，用分号分隔]
-vulnerabilityAssertions: [验证漏洞利用成功的断言]
+testLogic: [Concrete exploit code, can be multiple lines separated by semicolons]
+vulnerabilityAssertions: [Assertions that verify the exploit succeeded]
 
-示例：
+Example:
 testLogic: vm.prank(attacker); token.mint(attacker, 1000000 * 10**18);
 vulnerabilityAssertions: assertTrue(token.balanceOf(attacker) > attackerBalanceBefore, "Unauthorized mint attack should succeed");
 """
         
         try:
-            print("🤖 LLM正在生成动态漏洞利用测试...")
+            print("🤖 LLM is generating a dynamic exploit test...")
             print("-" * 50)
             print(prompt)
             print("-" * 50)
             
             response = ask_openai_common(prompt)
             
-            print("🤖 LLM生成的漏洞利用测试:")
+            print("🤖 LLM-generated exploit test:")
             print("-" * 50)
             print(response)
             print("-" * 50)
@@ -120,28 +120,28 @@ vulnerabilityAssertions: assertTrue(token.balanceOf(attacker) > attackerBalanceB
             return self._parse_response(response)
             
         except Exception as e:
-            print(f"动态测试生成失败: {e}")
+            print(f"Dynamic test generation failed: {e}")
             return create_default_template_variables()
     
     def _generate_dynamic_spec_test(self, description: str, contract_code: str) -> Dict[str, str]:
-        """动态生成规范违反检测测试"""
+        """Dynamically generate specification violation detection test"""
         
-        # 1. 首先让LLM生成形式化规范
+        # 1. First ask the LLM to generate formal specifications
         formal_specs = self.spec_generator.generate_formal_specs(contract_code, description)
         
-        # 2. 基于规范生成测试逻辑
+        # 2. Generate test logic based on the specifications
         test_logic = self.spec_generator.generate_vulnerability_test_logic(
             contract_code, description, formal_specs
         )
         
-        # 3. 组合成最终的测试变量
+        # 3. Compose final template variables
         return {
             'testLogic': test_logic['testLogic'],
             'vulnerabilityAssertions': f"{test_logic['specViolationChecks']}; {test_logic['attackVerification']}"
         }
     
     def _parse_response(self, response: str) -> Dict[str, str]:
-        """解析LLM响应"""
+        """Parse LLM response"""
         variables = create_default_template_variables()
         
         lines = response.split('\n')
@@ -159,16 +159,16 @@ vulnerabilityAssertions: assertTrue(token.balanceOf(attacker) > attackerBalanceB
         return variables
     
     def _read_contract_code(self) -> str:
-        """读取目标合约代码"""
+        """Read target contract code"""
         try:
             contract_path = Path(self.project_path) / "src" / "SimpleERC20.sol"
             if contract_path.exists():
                 with open(contract_path, 'r', encoding='utf-8') as f:
                     return f.read()
             else:
-                return "// 合约文件不存在"
+                return "// Contract file does not exist"
         except Exception as e:
-            return f"// 读取合约失败: {e}"
+            return f"// Failed to read contract: {e}"
 
 
 

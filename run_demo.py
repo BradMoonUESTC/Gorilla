@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-自动演示脚本 - 直接运行一个测试用例
+Automated demo script - run a single test case directly
 """
 
 import os
@@ -15,54 +15,54 @@ from main import GorillaTestSystem
 
 
 def main():
-    """自动演示"""
+    """Automated demo"""
     
-    print("🚀 Gorilla测试系统自动演示")
+    print("🚀 Gorilla Testing System Automated Demo")
     print("=" * 50)
     
-    # 加载环境变量
+    # Load environment variables
     load_dotenv()
     
-    # 设置项目路径
+    # Set project path
     project_path = os.path.join(os.path.dirname(__file__), 'test-project')
     
-    print(f"📁 项目路径: {project_path}")
+    print(f"📁 Project path: {project_path}")
     
-    # 创建测试系统
+    # Create test system
     system = GorillaTestSystem(project_path)
     
-    # 简单的测试用例
-    description = "测试ERC20代币的基本转账功能，创建代币合约，给用户分配代币，然后测试从一个地址向另一个地址转账"
+    # Simple test case
+    description = "Test the basic ERC20 token transfer function: deploy the token contract, allocate tokens to users, then test transferring from one address to another"
     
-    print(f"\n🎯 测试描述: {description}")
+    print(f"\n🎯 Test description: {description}")
     print("=" * 50)
     
-    # 执行测试
+    # Execute test
     try:
         success = system.generate_and_run_test(description)
         
         print("\n" + "=" * 50)
         if success:
-            print("🎉 演示完成! 测试成功执行")
+            print("🎉 Demo complete! Test executed successfully")
             
-            # 显示生成的测试文件
+            # Show the generated test file
             test_file = Path(project_path) / "test" / "GorillaTest.t.sol"
             if test_file.exists():
-                print(f"\n📄 生成的测试文件: {test_file}")
-                print("文件内容预览:")
+                print(f"\n📄 Generated test file: {test_file}")
+                print("File preview:")
                 print("-" * 30)
                 with open(test_file, 'r') as f:
                     content = f.read()
                     lines = content.split('\n')
-                    for i, line in enumerate(lines[:20], 1):  # 显示前20行
+                    for i, line in enumerate(lines[:20], 1):  # Show first 20 lines
                         print(f"{i:2d}| {line}")
                     if len(lines) > 20:
-                        print(f"... (还有 {len(lines) - 20} 行)")
+                        print(f"... ({len(lines) - 20} more lines)")
         else:
-            print("❌ 演示完成，但测试执行失败")
+            print("❌ Demo complete, but test execution failed")
             
     except Exception as e:
-        print(f"\n❌ 演示过程中发生错误: {e}")
+        print(f"\n❌ An error occurred during the demo: {e}")
         import traceback
         traceback.print_exc()
 

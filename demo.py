@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Gorilla测试系统演示脚本
+Gorilla testing system demo script
 """
 
 import os
@@ -15,52 +15,52 @@ from main import GorillaTestSystem
 
 
 def main():
-    """演示主函数"""
+    """Demo entry point"""
     
-    print("🚀 Gorilla测试系统演示")
+    print("🚀 Gorilla Testing System Demo")
     print("=" * 50)
     
-    # 加载环境变量
+    # Load environment variables
     load_dotenv()
     
-    # 检查环境变量
+    # Check environment variables
     api_key = os.getenv('OPENAI_API_KEY')
     api_base = os.getenv('OPENAI_API_BASE')
     
     if not api_key:
-        print("❌ 错误: OPENAI_API_KEY 环境变量未设置")
+        print("❌ Error: OPENAI_API_KEY environment variable is not set")
         return
         
     print(f"✅ API Base: {api_base}")
     print(f"✅ API Key: {api_key[:10]}...")
     print()
     
-    # 设置项目路径
+    # Set project path
     project_path = os.path.join(os.path.dirname(__file__), 'test-project')
     
-    print(f"📁 项目路径: {project_path}")
+    print(f"📁 Project path: {project_path}")
     print()
     
-    # 创建测试系统
+    # Create test system
     system = GorillaTestSystem(project_path)
     
-    # 漏洞挖掘测试用例列表
+    # Vulnerability exploration test cases
     test_cases = [
-        "测试ERC20合约的重入攻击漏洞，特别是withdraw函数的重入风险",
-        "测试ERC20合约的权限控制漏洞，验证mint函数是否可以被任意用户调用",
-        "测试ERC20合约的allowance机制漏洞，检查transferFrom是否正确减少授权额度",
-        "测试ERC20合约的整数溢出漏洞，在unchecked块中寻找溢出风险",
-        "全面的智能合约安全审计测试，挖掘所有可能的逻辑漏洞和安全风险",
+        "Test the ERC20 contract for reentrancy, especially the reentrancy risk in withdraw",
+        "Test the ERC20 contract for access control; verify whether the mint function can be called by any user",
+        "Test the ERC20 contract for allowance mechanism issues; check whether transferFrom properly decreases the allowance",
+        "Test the ERC20 contract for integer overflow; look for overflow risks in unchecked blocks",
+        "Comprehensive smart contract security audit; find all potential logical and security risks",
     ]
     
-    print("🔍 可用的漏洞挖掘测试用例:")
+    print("🔍 Available vulnerability exploration test cases:")
     for i, test_case in enumerate(test_cases, 1):
         print(f"  {i}. {test_case}")
     print()
     
-    # 让用户选择测试用例
+    # Let the user choose a test case
     try:
-        choice = input(f"请选择测试用例 (1-{len(test_cases)}) 或输入自定义描述: ").strip()
+        choice = input(f"Choose a test case (1-{len(test_cases)}) or enter a custom description: ").strip()
         
         if choice.isdigit() and 1 <= int(choice) <= len(test_cases):
             description = test_cases[int(choice) - 1]
@@ -68,25 +68,25 @@ def main():
             description = choice
             
         if not description:
-            print("❌ 未提供测试描述")
+            print("❌ No test description provided")
             return
             
-        print(f"\n🎯 选择的测试: {description}")
+        print(f"\n🎯 Selected test: {description}")
         print("=" * 50)
         
-        # 执行测试
+        # Execute test
         success = system.generate_and_run_test(description)
         
         print("\n" + "=" * 50)
         if success:
-            print("🎉 演示完成! 测试成功执行")
+            print("🎉 Demo complete! Test executed successfully")
         else:
-            print("❌ 演示完成，但测试执行失败")
+            print("❌ Demo complete, but test execution failed")
             
     except KeyboardInterrupt:
-        print("\n👋 演示被用户中断")
+        print("\n👋 Demo interrupted by user")
     except Exception as e:
-        print(f"\n❌ 演示过程中发生错误: {e}")
+        print(f"\n❌ An error occurred during the demo: {e}")
 
 
 if __name__ == "__main__":

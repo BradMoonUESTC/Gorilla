@@ -1,5 +1,5 @@
 """
-Forge测试执行器 - 执行生成的测试文件并处理结果
+Forge Test Executor - Execute generated test files and process results
 """
 
 import subprocess
@@ -10,70 +10,70 @@ from template_system import escape_ansi
 
 
 class ForgeExecutor:
-    """Forge测试执行器"""
+    """Forge test executor"""
     
     def __init__(self, project_path: str):
         self.project_path = Path(project_path)
         
     def write_and_run_test(self, test_code: str, test_name: str = "GorillaTest") -> Tuple[bool, str]:
-        """写入测试文件并执行forge test"""
+        """Write the test file and run `forge test`"""
         
-        # 1. 确保测试目录存在
+        # 1. Ensure the test directory exists
         test_dir = self.project_path / "test"
         test_dir.mkdir(parents=True, exist_ok=True)
         
-        # 2. 写入测试文件
+        # 2. Write the test file
         test_file = test_dir / f"{test_name}.t.sol"
         try:
             with open(test_file, "w", encoding="utf-8") as f:
                 f.write(test_code)
-            print(f"✅ 测试文件已写入: {test_file}")
+            print(f"✅ Test file written: {test_file}")
         except Exception as e:
-            return False, f"写入测试文件失败: {e}"
+            return False, f"Failed to write test file: {e}"
         
-        # 3. 执行forge test
+        # 3. Execute forge test
         return self._run_forge_test(test_name)
     
     def _run_forge_test(self, test_name: str) -> Tuple[bool, str]:
-        """执行forge test命令"""
+        """Execute the `forge test` command"""
         try:
-            # 执行forge test命令
+            # Execute forge test command
             result = subprocess.run([
                 "forge", "test", 
                 "--match-contract", test_name,
-                "-vvv"  # 详细输出
+                "-vvv"  # verbose output
             ], 
             cwd=self.project_path,
             capture_output=True,
             text=True,
-            timeout=60  # 60秒超时
+            timeout=60  # 60-second timeout
             )
             
-            # 清理ANSI转义序列
+            # Strip ANSI escape sequences
             stdout = escape_ansi(result.stdout)
             stderr = escape_ansi(result.stderr)
             
             output = f"STDOUT:\n{stdout}\n\nSTDERR:\n{stderr}"
             
-            # 检查是否成功
+            # Check success
             success = result.returncode == 0 and "FAILED" not in stdout
             
             if success:
-                print("✅ 测试执行成功!")
+                print("✅ Test executed successfully!")
             else:
-                print("❌ 测试执行失败")
+                print("❌ Test execution failed")
                 
             return success, output
             
         except subprocess.TimeoutExpired:
-            return False, "测试执行超时 (60秒)"
+            return False, "Test execution timed out (60 seconds)"
         except FileNotFoundError:
-            return False, "forge命令未找到，请确保已安装Foundry"
+            return False, "Command 'forge' not found. Please ensure Foundry is installed."
         except Exception as e:
-            return False, f"执行测试时发生错误: {e}"
+            return False, f"An error occurred while executing tests: {e}"
     
     def check_foundry_installation(self) -> bool:
-        """检查Foundry是否已安装"""
+        """Check if Foundry is installed"""
         try:
             result = subprocess.run(["forge", "--version"], 
                                   capture_output=True, 
@@ -83,19 +83,19 @@ class ForgeExecutor:
             return False
     
     def initialize_foundry_project(self) -> bool:
-        """初始化Foundry项目（如果需要）"""
+        """Initialize a Foundry project if needed"""
         foundry_toml = self.project_path / "foundry.toml"
         
         if not foundry_toml.exists():
             try:
-                # 运行forge init
+                # Run forge init
                 subprocess.run(["forge", "init", "--no-git", "."], 
                              cwd=self.project_path,
                              check=True)
-                print("✅ Foundry项目初始化完成")
+                print("✅ Foundry project initialized")
                 return True
             except subprocess.CalledProcessError as e:
-                print(f"❌ Foundry项目初始化失败: {e}")
+                print(f"❌ Foundry project initialization failed: {e}")
                 return False
         
         return True
