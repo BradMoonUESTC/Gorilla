@@ -1,21 +1,21 @@
 """
-规范违反检测器 - 检测合约是否违反了形式化规范
+规范违反检测器 - 检测合约是否违反了形式化规范（使用动态规范生成）
 """
 
 import re
 from typing import Dict, List, Any
-from formal_specs import FormalSpecGenerator
+from dynamic_spec_generator import DynamicSpecGenerator
 
 
 class SpecViolationDetector:
-    """规范违反检测器"""
+    """规范违反检测器（基于动态规范生成）"""
     
     def __init__(self, project_path: str):
         self.project_path = project_path
-        self.spec_generator = FormalSpecGenerator(project_path)
+        self.spec_generator = DynamicSpecGenerator(project_path)
     
     def detect_spec_violations(self, vulnerability_type: str, contract_code: str) -> Dict[str, Any]:
-        """检测规范违反"""
+        """检测规范违反（使用动态规范生成）"""
         
         violations = []
         
@@ -35,11 +35,22 @@ class SpecViolationDetector:
         # 通用不变量检查
         violations.extend(self._check_general_invariants(contract_code))
         
+        # 使用动态规范生成器生成形式化规范
+        print("🧠 使用动态规范生成器生成不变量...")
+        formal_specs = self.spec_generator.generate_formal_specs(
+            contract_code, 
+            vulnerability_focus=vulnerability_type
+        )
+        
+        # 提取不变量用于测试
+        invariants_to_check = self._extract_invariants_from_specs(formal_specs, vulnerability_type)
+        
         return {
             "vulnerability_type": vulnerability_type,
             "has_violations": len(violations) > 0,
             "violations": violations,
-            "invariants_to_check": self.spec_generator.get_invariants_for_test(vulnerability_type)
+            "invariants_to_check": invariants_to_check,
+            "dynamic_specs": formal_specs
         }
     
     def _check_mint_authorization(self, contract_code: str) -> List[Dict[str, str]]:
@@ -134,5 +145,31 @@ class SpecViolationDetector:
             })
         
         return violations
+    
+    def _extract_invariants_from_specs(self, formal_specs: Dict[str, Any], vulnerability_type: str) -> List[Dict[str, str]]:
+        """从动态生成的形式化规范中提取不变量"""
+        invariants = []
+        
+        # 提取不变量
+        if 'invariants' in formal_specs:
+            for inv in formal_specs['invariants']:
+                invariants.append({
+                    'name': inv.get('name', ''),
+                    'description': inv.get('description', ''),
+                    'condition': inv.get('condition', ''),
+                    'violation_check': inv.get('check_code', '')
+                })
+        
+        # 提取安全属性作为不变量
+        if 'safety_properties' in formal_specs:
+            for prop in formal_specs['safety_properties']:
+                invariants.append({
+                    'name': prop.get('name', ''),
+                    'description': prop.get('description', ''),
+                    'condition': prop.get('violation_condition', ''),
+                    'violation_check': prop.get('check_code', '')
+                })
+        
+        return invariants
 
 
