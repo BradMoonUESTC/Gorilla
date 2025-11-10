@@ -41,7 +41,6 @@ Create a `.env` file in the project root:
 # OpenAI API Configuration
 OPENAI_API_KEY=your_api_key_here
 OPENAI_BASE_URL=https://api.openai.com/v1  # Optional: custom endpoint
-OPENAI_MODEL=gpt-4  # Or gpt-3.5-turbo, etc.
 ```
 
 ## Testing Modes
